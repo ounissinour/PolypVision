@@ -1,1 +1,32 @@
 
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.egg-info/
+.venv/
+venv/
+
+# Datasets (ma na3mlouch commit lil data)
+data/*
+!data/README.md
+
+# Model checkpoints
+*.pth
+*.pt
+*.ckpt
+snapshots/
+
+# Predicted masks (kbar w yetjeddou)
+results/**/masks/
+results/**/*.png
+
+# Official repos clonés
+PraNet/
+Polyp-PVT/
+
+# Système
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
