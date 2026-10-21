@@ -1,0 +1,11 @@
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+# data, weights and prediction maps live in Colab/Drive, not in git
+data/
+weights/
+maps/
+*.pth
+*.zip
+PraNet/
+Polyp-PVT/
