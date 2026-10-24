@@ -1,0 +1,12 @@
+| model     | dataset           |   n |   meanDice |   paper_meanDice |   dDice |   meanIoU |   paper_meanIoU |   dIoU |   Dice@0.5 | source                                       |
+|:----------|:------------------|----:|-----------:|-----------------:|--------:|----------:|----------------:|-------:|-----------:|:---------------------------------------------|
+| PraNet    | Kvasir            | 100 |      0.894 |            0.898 |  -0.004 |     0.836 |           0.84  | -0.004 |      0.899 | PraNet paper Tab. 1                          |
+| PraNet    | CVC-ClinicDB      |  62 |      0.899 |            0.899 |  -0     |     0.849 |           0.849 |  0     |      0.905 | PraNet paper Tab. 1                          |
+| PraNet    | CVC-ColonDB       | 380 |      0.712 |            0.709 |   0.003 |     0.64  |           0.64  |  0     |      0.715 | PraNet paper Tab. 2 (Polyp-PVT paper: 0.712) |
+| PraNet    | ETIS-LaribPolypDB | 196 |      0.628 |            0.628 |   0     |     0.567 |           0.567 | -0     |      0.637 | PraNet paper Tab. 2                          |
+| PraNet    | CVC-300           |  60 |      0.871 |            0.871 |  -0     |     0.797 |           0.797 | -0     |      0.877 | PraNet paper Tab. 2                          |
+| Polyp-PVT | Kvasir            | 100 |      0.917 |            0.917 |   0     |     0.864 |           0.864 |  0     |      0.92  | Polyp-PVT paper Tab. 1                       |
+| Polyp-PVT | CVC-ClinicDB      |  62 |      0.937 |            0.937 |  -0     |     0.889 |           0.889 |  0     |      0.94  | Polyp-PVT paper Tab. 1                       |
+| Polyp-PVT | CVC-ColonDB       | 380 |      0.808 |            0.808 |   0     |     0.727 |           0.727 |  0     |      0.811 | Polyp-PVT paper Tab. 2 / README              |
+| Polyp-PVT | ETIS-LaribPolypDB | 196 |      0.787 |            0.787 |  -0     |     0.706 |           0.706 | -0     |      0.79  | Polyp-PVT paper Tab. 2                       |
+| Polyp-PVT | CVC-300           |  60 |      0.9   |            0.9   |   0     |     0.833 |           0.833 |  0     |      0.904 | Polyp-PVT paper Tab. 3                       |
