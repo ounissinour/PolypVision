@@ -1,55 +1,79 @@
-
 """
-metrics.py - Shared evaluation utilities for PolypVision.
+metrics.py - Shared evaluation code for PolypVision.
 
-Computes per-image Dice and IoU between predicted and ground-truth masks,
-and aggregates them per dataset. Used for all models (PraNet, Polyp-PVT, ...)
-so that results are directly comparable.
+Computes mean Dice and mean IoU with the `pysodmetrics` package, which follows
+the MATLAB evaluation toolbox used in the PraNet and Polyp-PVT papers: for each
+image the score is computed at 256 thresholds, averaged over images, and then
+averaged over thresholds.
 
-Evaluation choices (document these in the report):
-  - Predictions are grayscale maps in [0, 255], same size as the ground truth.
-  - Binarization: prediction >= 0.5 (i.e. >= 127.5 on the 0-255 scale).
-  - Ground truth is binarized at 0.5 as well.
-  - Dice and IoU are computed per image, then averaged over the dataset.
-  - eps avoids division by zero when both masks are empty.
+Expected layout:
+    pred_root/<dataset>/<image>.png          prediction maps (0-255 grayscale)
+    gt_root/<dataset>/masks/<image>.png      ground-truth masks
+
+Usage:
+    from metrics import evaluate_all
+    df = evaluate_all("PraNet", pred_root, gt_root)
 """
 
 import os
+
 import cv2
 import numpy as np
 import pandas as pd
+from py_sod_metrics import DICEHandler, FmeasureV2, IOUHandler
+
+DATASETS = ["CVC-300", "CVC-ClinicDB", "CVC-ColonDB", "ETIS-LaribPolypDB", "Kvasir"]
 
 
-def dice_iou(pred, gt, thr=0.5, eps=1e-8):
-    """Return (dice, iou) for one prediction/ground-truth pair (uint8 arrays 0-255)."""
-    p = (pred / 255.0) >= thr
-    g = (gt / 255.0) >= 0.5
-    inter = np.logical_and(p, g).sum()
-    union = np.logical_or(p, g).sum()
-    dice = (2 * inter + eps) / (p.sum() + g.sum() + eps)
-    iou = (inter + eps) / (union + eps)
-    return dice, iou
+def _list_images(folder):
+    return sorted(n for n in os.listdir(folder) if not n.startswith("."))
 
 
-def evaluate(model_name, dataset, pred_root, gt_root, thr=0.5):
-    """Evaluate one model on one dataset. Returns a DataFrame with one row per image.
+def evaluate_dataset(pred_dir, gt_dir):
+    """Return (n_images, mean_dice, mean_iou) for one dataset."""
+    fm = FmeasureV2(
+        metric_handlers={
+            "dice": DICEHandler(with_dynamic=True, with_adaptive=False,
+                                with_binary=False, sample_based=True),
+            "iou": IOUHandler(with_dynamic=True, with_adaptive=False,
+                              with_binary=False, sample_based=True),
+        }
+    )
+    names = _list_images(pred_dir)
+    for name in names:
+        pred = cv2.imread(os.path.join(pred_dir, name), cv2.IMREAD_GRAYSCALE)
+        gt = cv2.imread(os.path.join(gt_dir, name), cv2.IMREAD_GRAYSCALE)
+        if pred is None or gt is None:
+            raise FileNotFoundError(f"Cannot read prediction or mask for {name}")
+        gt = ((gt > 128) * 255).astype(np.uint8)
+        if pred.shape != gt.shape:
+            pred = cv2.resize(pred, (gt.shape[1], gt.shape[0]))
+        fm.step(pred=pred, gt=gt)
+    res = fm.get_results()
+    return len(names), float(res["dice"]["dynamic"].mean()), float(res["iou"]["dynamic"].mean())
 
-    Columns: model, dataset, image, dice, iou  (the shared result format).
+
+def evaluate_all(model_name, pred_root, gt_root, datasets=DATASETS):
+    """Evaluate one model on several datasets.
+
+    Returns a DataFrame with columns: model, dataset, n_images, mean_dice, mean_iou.
     """
     rows = []
-    for name in sorted(os.listdir(pred_root)):
-        pr = cv2.imread(os.path.join(pred_root, name), 0)
-        gt = cv2.imread(os.path.join(gt_root, name), 0)
-        if pr is None or gt is None:
-            print(f"Skipping {name}: could not read prediction or ground truth")
-            continue
-        if pr.shape != gt.shape:
-            pr = cv2.resize(pr, (gt.shape[1], gt.shape[0]))
-        d, i = dice_iou(pr, gt, thr=thr)
-        rows.append(dict(model=model_name, dataset=dataset, image=name, dice=d, iou=i))
+    for ds in datasets:
+        n, dice, iou = evaluate_dataset(os.path.join(pred_root, ds),
+                                        os.path.join(gt_root, ds, "masks"))
+        rows.append(dict(model=model_name, dataset=ds, n_images=n,
+                         mean_dice=round(dice, 4), mean_iou=round(iou, 4)))
     return pd.DataFrame(rows)
 
 
-def summarize(df):
-    """Mean Dice and IoU per model and dataset."""
-    return df.groupby(["model", "dataset"])[["dice", "iou"]].mean().round(4)
+def compare_with_paper(df, paper):
+    """Join results with paper values and add the differences.
+
+    `paper` maps dataset -> (dice, iou), e.g. {"Kvasir": (0.898, 0.840)}.
+    """
+    p = pd.DataFrame(paper, index=["dice_paper", "iou_paper"]).T
+    out = df.set_index("dataset").join(p)
+    out["dice_diff"] = (out["mean_dice"] - out["dice_paper"]).round(4)
+    out["iou_diff"] = (out["mean_iou"] - out["iou_paper"]).round(4)
+    return out
