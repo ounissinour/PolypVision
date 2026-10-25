@@ -1,0 +1,5 @@
+# Colab already provides torch, torchvision, opencv, numpy, pandas, matplotlib
+gdown
+pysodmetrics>=1.6
+timm
+tabulate
