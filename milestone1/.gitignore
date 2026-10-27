@@ -9,3 +9,4 @@ maps/
 *.zip
 PraNet/
 Polyp-PVT/
+.pytest_cache/
