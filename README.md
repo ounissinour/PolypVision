@@ -41,41 +41,33 @@ Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentati
 
 ```
 README.md                          this file
-requirements.txt                   packages to install on top of Colab's defaults (same list as milestone1/requirements.txt)
+requirements.txt                   packages to install on top of Colab's defaults
 docs/
   Project_Documentation.md         project idea, research question, approach
   Team_Tasks.md                    members and task split
 data/README.md                     dataset notes and the folder layout the models expect (data itself is not committed)
-milestone1/                        Milestone 1, self-contained
-  README.md                        full Milestone 1 write-up: method, results, PraNet/Kvasir investigation
-  requirements.txt                 extra packages the notebook installs (gdown, pysodmetrics, timm, tabulate)
-  notebooks/M1_Reproduce.ipynb     THE notebook to run (see "How to run")
-  scripts/download.sh              downloads data and weights with gdown and checks the test-set sizes
-  scripts/patch_repos.py           compatibility patches for the official repos (scipy.misc.imsave -> cv2.imwrite, F.upsample -> F.interpolate, map_location)
-  src/evaluate.py                  mean Dice / mean IoU with pysodmetrics (paper definition) for one model; writes summary and per-image CSVs
-  src/compare.py                   joins our summaries with the paper tables -> results/comparison.csv|md
-  tests/test_evaluate.py           pytest checks for the two scripts (synthetic masks, committed results vs paper)
+milestone1/
+  M1_Reproduce.ipynb               THE notebook of Milestone 1, self-contained (see "How to run")
+  README.md                        Milestone 1 write-up: method, results, PraNet/Kvasir investigation
+  requirements.txt                 what the notebook pip-installs (gdown, pysodmetrics, timm, tabulate)
   results/PraNet_summary.csv       mean Dice / IoU per test set, our maps     (same for Polyp-PVT_summary.csv)
   results/PraNet_per_image.csv     per-image scores                            (same for Polyp-PVT_per_image.csv)
   results/comparison.csv|md        ours vs paper, side by side
   results/authors_maps_check/      evaluator check: the authors' published maps scored with our code
   figures/reproduced_vs_paper.png  bar chart, ours vs paper
   figures/largest_disagreements.png images where the two models disagree most
-notebooks/
-  01_PraNet_Reproduction.ipynb     earlier standalone PraNet-only run (same PraNet numbers as milestone1)
-  02_PolypPVT_Reproduction.ipynb   stub; Polyp-PVT is covered by milestone1
-  03..06_*.ipynb                   empty notebooks for Milestones 2 and 3 (title only)
+notebooks/03..06_*.ipynb           empty notebooks for Milestones 2 and 3 (title only)
 src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
 src/evaluation|preprocessing|training/   empty, for Milestones 2 and 3
-results/reproduction/              early PraNet run with single-threshold Dice (superseded by milestone1/results)
+results/, figures/                 outputs of Milestones 2 and 3 (empty for now)
 ```
 
 ## Data source and how it is downloaded
 
 All data and weights come from the Google Drive links published in the official READMEs of
-[PraNet](https://github.com/DengPingFan/PraNet) and [Polyp-PVT](https://github.com/DengPingFan/Polyp-PVT),
-and are downloaded by `milestone1/scripts/download.sh` with `gdown` (the notebook calls it; nothing is
-committed to this repository).
+[PraNet](https://github.com/DengPingFan/PraNet) and [Polyp-PVT](https://github.com/DengPingFan/Polyp-PVT).
+The download cell of the Milestone 1 notebook fetches them with `gdown`; nothing is committed to
+this repository.
 
 | What | Content | From |
 |---|---|---|
@@ -86,7 +78,7 @@ committed to this repository).
 | `pvt_v2_b2.pth` | PVTv2-B2 ImageNet backbone (Polyp-PVT's constructor loads it even at test time) | Polyp-PVT README §4.3 |
 | authors' prediction maps | used only to check our evaluator | both READMEs |
 
-The script caches the zips and weights in a work folder (your Google Drive when `USE_DRIVE = True`),
+The cell caches the zips and weights in a work folder (your Google Drive when `USE_DRIVE = True`),
 unzips to local disk, removes `__MACOSX` folders, and fails loudly if any test set does not have the
 expected number of images and masks. One copy of `TestDataset` is shared by both models, so they are
 scored against identical masks.
@@ -97,24 +89,23 @@ Pretrained weights are the authors' own, unchanged.
 
 ## How to run
 
-The solution is one Jupyter notebook: **`milestone1/notebooks/M1_Reproduce.ipynb`**.
+The solution is one Jupyter notebook: **`milestone1/M1_Reproduce.ipynb`**. It needs nothing else
+from this repository.
 
 1. Open it in Google Colab:
-   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/notebooks/M1_Reproduce.ipynb)
+   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/M1_Reproduce.ipynb)
 2. Runtime → Change runtime type → GPU (a T4 is enough).
 3. Runtime → Run all. The second cell asks to mount Google Drive (set `USE_DRIVE = False` to skip).
 
-About 15 minutes end to end, most of it downloads. The notebook clones this repository and the two
-official repositories at fixed commits, downloads data and weights, patches the test scripts, runs
-`MyTest.py` (PraNet) and `Test.py` (Polyp-PVT), evaluates the prediction maps, scores the authors'
-published maps as a check, prints the comparison with the paper tables and draws the figures. Outputs
-go to `milestone1/results/` and `milestone1/figures/` inside the Colab clone and are copied to the
-work folder.
+About 15 minutes end to end, most of it downloads. The notebook clones the two official repositories
+at fixed commits, downloads data and weights, patches the test scripts, runs `MyTest.py` (PraNet) and
+`Test.py` (Polyp-PVT), evaluates the prediction maps, scores the authors' published maps as a check,
+prints the comparison with the paper tables and draws the figures. Results and figures are written to
+`/content/m1` and copied to the work folder.
 
-To run locally instead, install `milestone1/requirements.txt` plus PyTorch and OpenCV and run the
-same cells in order from a shell (every step is plain Python or bash). A full CPU run on a Mac takes
-about 30 minutes, mostly Polyp-PVT inference. The tests alone need no data:
-`cd milestone1 && python -m pytest -q tests`.
+To run locally instead, install `requirements.txt` plus PyTorch and OpenCV and run the cells in order
+(every step is plain Python or bash). A full CPU run on a Mac takes about 30 minutes, mostly
+Polyp-PVT inference.
 
 ## Milestone 1 results
 

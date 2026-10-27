@@ -1,43 +1,30 @@
-# Polyp segmentation – Milestone 1: reproduce PraNet and Polyp-PVT
+# Milestone 1 – Reproduce PraNet and Polyp-PVT
 
 Reproduces the published mean Dice and mean IoU of
 [PraNet](https://github.com/DengPingFan/PraNet) (CNN, MICCAI 2020) and
 [Polyp-PVT](https://github.com/DengPingFan/Polyp-PVT) (transformer, 2023) on the five standard
 test sets, using the authors' trained models and the same evaluation definition as their papers.
 
-This folder is Milestone 1 of the [PolypVision](https://github.com/ounissinour/PolypVision) team
-project; everything it needs is inside it.
-
 ## Run it
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/notebooks/M1_Reproduce.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/M1_Reproduce.ipynb)
 
-Open `notebooks/M1_Reproduce.ipynb` in Colab with a GPU runtime and run all cells. It
+`M1_Reproduce.ipynb` is self-contained: open it in Colab with a GPU runtime and run all cells.
+It does not need anything else from this repository. It
 
 1. clones both official repositories at fixed commits,
-2. downloads test/train data and trained weights with `gdown` (`scripts/download.sh`),
-3. applies compatibility patches (`scripts/patch_repos.py`),
-4. runs `MyTest.py` (PraNet) and `Test.py` (Polyp-PVT) to write prediction maps,
-5. computes mean Dice / mean IoU with pysodmetrics (`src/evaluate.py`), on our maps and, as a check,
-   on the authors' published maps,
-6. compares them with the paper tables (`src/compare.py`) and draws figures.
+2. downloads the test data and the trained weights with `gdown` (Google Drive links from the two READMEs),
+3. patches the official test scripts for a current software stack (`scipy.misc.imsave` → `cv2.imwrite`, …),
+4. runs `MyTest.py` (PraNet) and `Test.py` (Polyp-PVT) to write the prediction maps,
+5. computes mean Dice / mean IoU with pysodmetrics, on our maps and, as a check, on the authors' published maps,
+6. compares them with the paper tables and draws the figures.
 
-Results land in `results/` (`*_summary.csv`, `*_per_image.csv`, `comparison.csv|md`) and `figures/`.
-
-## Tests
-
-`tests/test_evaluate.py` checks `src/evaluate.py` on small synthetic masks (perfect prediction,
-a prediction twice the size of the polyp, averaging over images, missing files) and checks that
-`src/compare.py` on the committed summaries gives the committed `results/comparison.csv`, with every
-value within 0.005 of the paper. The notebook runs them after the evaluation; locally:
-
-```
-cd milestone1 && python -m pytest -q tests
-```
+About 15 minutes on a T4, most of it downloads. The outputs of our run are committed here:
+`results/` (`*_summary.csv`, `*_per_image.csv`, `comparison.csv|md`, `authors_maps_check/`) and `figures/`.
 
 ## Targets
 
-meanDic / meanIoU from the papers (`src/compare.py` holds the sources):
+meanDic / meanIoU from the papers (the notebook's comparison cell holds the sources):
 
 | Dataset (n) | PraNet | Polyp-PVT |
 |---|---|---|
@@ -67,8 +54,8 @@ in brackets (full table: `results/comparison.md`):
 Polyp-PVT reproduces exactly on all five sets, including the 0.808 target on CVC-ColonDB. Polyp-PVT
 beats PraNet on every set, most on the unseen ones: +0.096 Dice on CVC-ColonDB and +0.159 on ETIS.
 
-A second, independent run of the whole pipeline on CPU (macOS, torch 2.14, 27 Oct 2026) gives the
-same ten numbers to three decimals; per-image Dice differs from the T4 run by at most 1.3e-4.
+A second, independent run of the whole pipeline on CPU (macOS, torch 2.14) gives the same ten
+numbers to three decimals; per-image Dice differs from the T4 run by at most 1.3e-4.
 
 PraNet reproduces exactly on four sets. On Kvasir we get 0.894 instead of 0.898:
 
@@ -86,8 +73,8 @@ released `PraNet-19.pth`; we could not confirm this.
 
 ## Evaluator check
 
-Scoring the authors' published prediction maps (PraNet README §3.3, Polyp-PVT README §4.8) with
-`src/evaluate.py` reproduces all ten paper values to three decimals
+Scoring the authors' published prediction maps (PraNet README §3.3, Polyp-PVT README §4.8) with the
+notebook's evaluation cell reproduces all ten paper values to three decimals
 (`results/authors_maps_check/`). The one difference is PraNet on CVC-ColonDB: 0.712, which is
 what the Polyp-PVT paper reports; the PraNet paper says 0.709. So any gap between our maps and the
 papers comes from inference, not from the metric.
@@ -100,12 +87,12 @@ improvement over the paper when it is not.
 
 **What "mean Dice" means.** The MATLAB toolbox both papers use (`PraNet/eval/main.m`) binarises each
 min-max normalised map at 256 thresholds, computes Dice per image and threshold, averages over images,
-then over thresholds. `src/evaluate.py` gets the same number from pysodmetrics (`FmeasureV2` with
-`DICEHandler`/`IOUHandler`, dynamic mode). Dice after a single 0.5 threshold is a different, usually
-higher number; we report it as `Dice@0.5` only for reference. This matters for the 2026 audit question
-in Milestone 3.
+then over thresholds. The notebook gets the same number from pysodmetrics (`FmeasureV2` with
+`DICEHandler`/`IOUHandler`, dynamic mode) and checks the metric on two synthetic masks before using
+it. Dice after a single 0.5 threshold is a different, usually higher number; we report it as
+`Dice@0.5` only for reference. This matters for the 2026 audit question in Milestone 3.
 
-**Patches** (`scripts/patch_repos.py`), all compatibility only:
+**Patches** (one notebook cell), all compatibility only:
 - PraNet `MyTest.py`: `scipy.misc.imsave` (removed from SciPy) → `cv2.imwrite(path, res*255)`,
   as Polyp-PVT's `Test.py` already does; `F.upsample` → `F.interpolate`; weights loaded with `map_location`.
 - PraNet `lib/PraNet_Res2Net.py`: `pretrained=False` for the Res2Net backbone, whose ImageNet weights are
