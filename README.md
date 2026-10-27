@@ -35,15 +35,15 @@ data from other sources, robustness with few labels, and sensitivity to the eval
 | 2 · Improve | Retrain Polyp-PVT with a proper train/validation/test protocol; losses, augmentations, image sizes | planned | `notebooks/03_PolypPVT_Retraining.ipynb` |
 | 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `notebooks/04`–`06` |
 
-Full project outline: [`docs/Project_Documentation.docx`](docs/Project_Documentation.docx).
+Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentation.md).
 
 ## Files in the repository
 
 ```
 README.md                          this file
-requirements.txt                   (empty for now; Milestone 1 has its own)
+requirements.txt                   packages to install on top of Colab's defaults (same list as milestone1/requirements.txt)
 docs/
-  Project_Documentation.docx       project idea, research question, approach
+  Project_Documentation.md         project idea, research question, approach
   Team_Tasks.md                    members and task split
 data/README.md                     dataset notes and the folder layout the models expect (data itself is not committed)
 milestone1/                        Milestone 1, self-contained
@@ -64,7 +64,7 @@ milestone1/                        Milestone 1, self-contained
 notebooks/
   01_PraNet_Reproduction.ipynb     earlier standalone PraNet-only run (same PraNet numbers as milestone1)
   02_PolypPVT_Reproduction.ipynb   stub; Polyp-PVT is covered by milestone1
-  03..06_*.ipynb                   placeholders for Milestones 2 and 3
+  03..06_*.ipynb                   empty notebooks for Milestones 2 and 3 (title only)
 src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
 src/evaluation|preprocessing|training/   empty, for Milestones 2 and 3
 results/reproduction/              early PraNet run with single-threshold Dice (superseded by milestone1/results)

@@ -1,1 +1,7 @@
-
+# Colab already has torch, torchvision, opencv, numpy, pandas, matplotlib and pytest.
+# For a local run install these on top of them.
+gdown
+pysodmetrics>=1.6
+timm
+tabulate
+pytest
