@@ -31,7 +31,7 @@ data from other sources, robustness with few labels, and sensitivity to the eval
 
 | Milestone | What | Status | Where |
 |---|---|---|---|
-| **1 · Reproduce** | Run both official test scripts on the five test sets with the authors' trained weights, score with pysodmetrics, compare with the paper tables | **done** | [`milestone1/`](milestone1/) |
+| **1 · Reproduce** | Run both official test scripts on the five test sets with the authors' trained weights, score with pysodmetrics, compare with the paper tables; explore the data and prepare train / validation / test loaders | **done** | [`milestone1/`](milestone1/) |
 | 2 · Improve | Retrain Polyp-PVT with a proper train/validation/test protocol; losses, augmentations, image sizes | planned | `notebooks/03_PolypPVT_Retraining.ipynb` |
 | 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `notebooks/04`–`06` |
 
@@ -48,14 +48,18 @@ docs/
 data/README.md                     dataset notes and the folder layout the models expect (data itself is not committed)
 milestone1/
   M1_Reproduce.ipynb               THE notebook of Milestone 1, self-contained (see "How to run")
-  README.md                        Milestone 1 write-up: method, results, PraNet/Kvasir investigation
+  prepare_data.py                  Python script: data exploration, train / validation / test split, PyTorch datasets and loaders
+  README.md                        Milestone 1 write-up: method, results, PraNet/Kvasir investigation, data preparation
   requirements.txt                 what the notebook pip-installs (gdown, pysodmetrics, timm, tabulate)
   results/PraNet_summary.csv       mean Dice / IoU per test set, our maps     (same for Polyp-PVT_summary.csv)
   results/PraNet_per_image.csv     per-image scores                            (same for Polyp-PVT_per_image.csv)
   results/comparison.csv|md        ours vs paper, side by side
   results/authors_maps_check/      evaluator check: the authors' published maps scored with our code
+  results/splits.csv               every image with its split (train / val / test), source, size and polyp size
   figures/reproduced_vs_paper.png  bar chart, ours vs paper
   figures/largest_disagreements.png images where the two models disagree most
+  figures/data_samples.png         sample images with mask outlines from every split and source
+  figures/data_stats.png           polyp size distribution and images per split
 notebooks/03..06_*.ipynb           empty notebooks for Milestones 2 and 3 (title only)
 src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
 src/evaluation|preprocessing|training/   empty, for Milestones 2 and 3
@@ -87,10 +91,17 @@ Original dataset pages: [Kvasir-SEG](https://datasets.simula.no/kvasir-seg/),
 [CVC-ClinicDB](https://polyp.grand-challenge.org/CVCClinicDB/) (research and education use only).
 Pretrained weights are the authors' own, unchanged.
 
+**Preparation for training.** `milestone1/prepare_data.py` holds out 10 % of `TrainDataset` as a
+validation set (Kvasir at random, CVC-ClinicDB in blocks of consecutive video frames), keeps the five
+test sets as the papers use them, and builds PyTorch loaders that return 3×352×352 normalised image
+tensors as inputs and 1×352×352 binary masks as outputs (train 1285, val 165, test 798 images). Details
+and data figures in [`milestone1/README.md`](milestone1/README.md).
+
 ## How to run
 
-The solution is one Jupyter notebook: **`milestone1/M1_Reproduce.ipynb`**. It needs nothing else
-from this repository.
+The solution is one Jupyter notebook, **`milestone1/M1_Reproduce.ipynb`**, plus the Python script
+**`milestone1/prepare_data.py`** that the notebook fetches for its last section (so the notebook needs
+nothing else from this repository).
 
 1. Open it in Google Colab:
    [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/M1_Reproduce.ipynb)
@@ -100,8 +111,9 @@ from this repository.
 About 15 minutes end to end, most of it downloads. The notebook clones the two official repositories
 at fixed commits, downloads data and weights, patches the test scripts, runs `MyTest.py` (PraNet) and
 `Test.py` (Polyp-PVT), evaluates the prediction maps, scores the authors' published maps as a check,
-prints the comparison with the paper tables and draws the figures. Results and figures are written to
-`/content/m1` and copied to the work folder.
+prints the comparison with the paper tables, draws the figures, and finally explores the data and
+builds the train / validation / test loaders. Results and figures are written to `/content/m1` and
+copied to the work folder.
 
 To run locally instead, install `requirements.txt` plus PyTorch and OpenCV and run the cells in order
 (every step is plain Python or bash). A full CPU run on a Mac takes about 30 minutes, mostly
