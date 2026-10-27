@@ -12,9 +12,9 @@ BME · MSc Deep Learning (VITMMA19) · Fall 2026
 
 | Member | Neptun code |
 |---|---|
-| Nour Ounissi | `______` |
+| Nour Ounissi | RSPN69 |
 | Taha Mersni | K1TO74 |
-| Baha Amar | `______` |
+| Baha Amar | ZXQA2V |
 
 Who does what is in [`docs/Team_Tasks.md`](docs/Team_Tasks.md).
 
