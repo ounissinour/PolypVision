@@ -5,10 +5,12 @@ Reproduces the published mean Dice and mean IoU of
 [Polyp-PVT](https://github.com/DengPingFan/Polyp-PVT) (transformer, 2023) on the five standard
 test sets, using the authors' trained models and the same evaluation definition as their papers.
 
-Part of the team project in [ounissinour/PolypVision](https://github.com/ounissinour/PolypVision);
-this repository covers Milestone 1 only.
+This folder is Milestone 1 of the [PolypVision](https://github.com/ounissinour/PolypVision) team
+project; everything it needs is inside it.
 
 ## Run it
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/notebooks/M1_Reproduce.ipynb)
 
 Open `notebooks/M1_Reproduce.ipynb` in Colab with a GPU runtime and run all cells. It
 
@@ -20,9 +22,18 @@ Open `notebooks/M1_Reproduce.ipynb` in Colab with a GPU runtime and run all cell
    on the authors' published maps,
 6. compares them with the paper tables (`src/compare.py`) and draws figures.
 
-The notebook is generated from `scripts/build_notebook.py`; edit that and re-run it.
-
 Results land in `results/` (`*_summary.csv`, `*_per_image.csv`, `comparison.csv|md`) and `figures/`.
+
+## Tests
+
+`tests/test_evaluate.py` checks `src/evaluate.py` on small synthetic masks (perfect prediction,
+a prediction twice the size of the polyp, averaging over images, missing files) and checks that
+`src/compare.py` on the committed summaries gives the committed `results/comparison.csv`, with every
+value within 0.005 of the paper. The notebook runs them after the evaluation; locally:
+
+```
+cd milestone1 && python -m pytest -q tests
+```
 
 ## Targets
 
@@ -55,6 +66,9 @@ in brackets (full table: `results/comparison.md`):
 
 Polyp-PVT reproduces exactly on all five sets, including the 0.808 target on CVC-ColonDB. Polyp-PVT
 beats PraNet on every set, most on the unseen ones: +0.096 Dice on CVC-ColonDB and +0.159 on ETIS.
+
+A second, independent run of the whole pipeline on CPU (macOS, torch 2.14, 27 Oct 2026) gives the
+same ten numbers to three decimals; per-image Dice differs from the T4 run by at most 1.3e-4.
 
 PraNet reproduces exactly on four sets. On Kvasir we get 0.894 instead of 0.898:
 
