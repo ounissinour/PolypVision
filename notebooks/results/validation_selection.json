@@ -1,0 +1,10 @@
+{
+  "selected_experiment": "size_288",
+  "selected_checkpoint": "MyDrive/PolypVision_M2/runs/size_288/best.pt",
+  "best_epoch": 100,
+  "selection_rule": "highest validation dynamic mean Dice; validation dynamic mean IoU tie-break",
+  "validation_mean_dice": 0.9196323032297294,
+  "validation_mean_iou": 0.8678036419606217,
+  "locked_at_utc": "2026-11-17T23:05:41.641630+00:00",
+  "test_evaluated": false
+}

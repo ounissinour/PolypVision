@@ -147,3 +147,39 @@ same ten numbers.
 - CVC-ClinicDB — [polyp.grand-challenge.org](https://polyp.grand-challenge.org/CVCClinicDB/)
 - Evaluation audit (2026) — [arXiv:2607.08203](https://arxiv.org/abs/2607.08203)
 - Optional: [MedSAM](https://github.com/bowang-lab/MedSAM)
+
+## Milestone 2 — Improve Polyp-PVT
+
+Milestone 2 training and validation comparisons have completed; results are recorded on this branch. The source Colab notebook is [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb), and the reusable pipeline is [`src/training/m2_pipeline.py`](src/training/m2_pipeline.py). The executed notebook, validation table, and run provenance are archived under [`notebooks/results/`](notebooks/results/). Milestone 1 material and results remain intact. Milestone 3 and MedSAM were not undertaken.
+
+### Validation split and leakage controls
+
+The official training archive contains 900 Kvasir-SEG images and 550 CVC-ClinicDB frames. The M1 materials do not provide verified CVC-ClinicDB video-sequence identifiers, so all 550 ClinicDB frames were retained in training. A fixed-seed (2026) 10% holdout was created from Kvasir-SEG after image/mask pairing, dimension, exact-duplicate, and near-duplicate checks. The resulting split contains 810 Kvasir and 550 ClinicDB training images, plus 90 Kvasir validation images. This gives a Kvasir-only validation estimate; sequence-level ClinicDB validation remains unavailable without verified video IDs.
+
+All six experiment runs used this same split. The official five test datasets were not downloaded or evaluated during training, tuning, or checkpoint selection. The upstream Polyp-PVT test-set checkpoint-selection behavior was bypassed. The final selection was locked using validation dynamic mean Dice (256 thresholds), with validation mean IoU as the tie-breaker. The final official test evaluation remains **not run**; no test metrics are reported here.
+
+### Controlled experiments and validation results
+
+All runs used the official Polyp-PVT architecture and PVT-v2-B2 pretrained backbone, seed 2026, AdamW (learning rate 1e-4, weight decay 1e-4), batch size 8, up to 100 epochs, global gradient-norm clipping at 0.5, and mixed precision. The fixed learning rate follows the notebook configuration. Each comparison changes one factor from the 352-pixel, original structure-loss, no-augmentation baseline. The original two-output structure loss is retained for the baseline; alternative losses are applied to both output heads. Geometric augmentation applies identical right-angle rotations and horizontal/vertical flips to each image/mask pair. Images use bilinear resizing and masks nearest-neighbor resizing. Sizes are multiples of 32; the upstream per-batch multi-scale resizing is omitted in the size comparison.
+
+| Experiment | Input | Loss | Augmentation | Best epoch | Validation mean Dice | Validation mean IoU | Training time | Status |
+|---|---:|---|---|---:|---:|---:|---:|---|
+| `baseline_352` | 352 | Structure | None | 92 | 0.916565 | 0.866418 | 1 h 32 min | Complete |
+| `loss_bce_dice_352` | 352 | BCE + soft Dice | None | 24 | 0.915268 | 0.865554 | 1 h 31 min | Complete |
+| `loss_focal_tversky_352` | 352 | Focal Tversky | None | 77 | 0.913884 | 0.861342 | 1 h 31 min | Complete |
+| `augment_flip_rotate_352` | 352 | Structure | Paired flips and right-angle rotations | 74 | 0.914234 | 0.864610 | 1 h 34 min | Complete |
+| `size_288` | 288 | Structure | None | 100 | **0.919632** | **0.867804** | 1 h 21 min | Complete |
+| `size_416` | 416 | Structure | None | 86 | 0.917901 | 0.867589 | 2 h 02 min | Complete |
+
+The validation-selected checkpoint is `MyDrive/PolypVision_M2/runs/size_288/best.pt` in the Colab Drive folder; it was selected at epoch 100. The result is a validation result only, not a test-set result. The full precision values and recorded training seconds are in [`validation_summary.csv`](notebooks/results/validation_summary.csv).
+
+### Colab environment and reproducibility
+
+The executed run used Python 3.13.16, PyTorch 2.14.1+cu130, torchvision 0.29.1+cu130, CUDA 13.0, a Tesla T4 GPU, OpenCV 4.14.0, NumPy 2.4.6, pandas 2.2.3, timm 1.0.31, and pysodmetrics 1.6.2. The official Polyp-PVT repository was pinned to commit `cd71fbf9fcd8c32cc0f33699f4e0186073c64dc4`. The notebook preserves the Colab-provided PyTorch/torchvision stack, mounts Drive for persistent archive/checkpoint/log storage, and extracts images to temporary Colab storage. Epoch checkpoints include optimizer and RNG state and allow resuming after runtime disconnection. The exact runtime, split counts, training settings, validation-selected run, and test-evaluation status are recorded in [`run_provenance.json`](notebooks/results/run_provenance.json).
+
+| M2 status | Result |
+|---|---|
+| Completed validation experiments | 6 / 6 |
+| Validation-selected checkpoint | `size_288/best.pt` (epoch 100) |
+| Locked validation mean Dice / mean IoU | 0.919632 / 0.867804 |
+| Final evaluation on five official test sets | Not run |

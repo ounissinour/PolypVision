@@ -1,0 +1,49 @@
+{
+  "record_type": "Milestone 2 validation experiment run",
+  "selection_locked_at_utc": "2026-11-17T23:05:41.641630+00:00",
+  "runtime": {
+    "python": "3.13.16",
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "cuda": "13.0",
+    "gpu": "Tesla T4",
+    "opencv": "4.14.0",
+    "numpy": "2.4.6",
+    "pandas": "2.2.3",
+    "timm": "1.0.31",
+    "pysodmetrics": "1.6.2"
+  },
+  "official_polyp_pvt_commit": "cd71fbf9fcd8c32cc0f33699f4e0186073c64dc4",
+  "split": {
+    "seed": 2026,
+    "validation_fraction_from_kvasir": 0.1,
+    "train_counts": {
+      "CVC-ClinicDB": 550,
+      "Kvasir": 810
+    },
+    "validation_counts": {
+      "CVC-ClinicDB": 0,
+      "Kvasir": 90
+    },
+    "clinicdb_policy": "all ClinicDB frames kept in training because verified video-sequence IDs were unavailable"
+  },
+  "shared_training_config": {
+    "seed": 2026,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "batch_size": 8,
+    "epoch_budget": 100,
+    "grad_clip": 0.5,
+    "mixed_precision": true,
+    "selection": "highest validation dynamic mean Dice; validation dynamic mean IoU tie-break"
+  },
+  "selected_experiment": "size_288",
+  "selected_checkpoint": "runs/size_288/best.pt",
+  "selected_best_epoch": 100,
+  "validation_mean_dice": 0.9196323032297294,
+  "validation_mean_iou": 0.8678036419606217,
+  "all_six_experiments_complete": true,
+  "official_test_datasets_downloaded_or_evaluated": false,
+  "note": "Values transcribed from the executed Colab notebook output; no test metrics are present."
+}
