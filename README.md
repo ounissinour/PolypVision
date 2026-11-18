@@ -223,7 +223,7 @@ Mean Dice (authors' models: Milestone 1 per-image scores):
 Mean IoU of our model: 0.846 / 0.835 / 0.703 / 0.625 / 0.801 (mean 0.762).
 
 - Our validation-selected Polyp-PVT beats PraNet on average (+0.028), mostly on the unseen hospitals
-  (ColonDB +0.070, ETIS +0.078).
+  (ColonDB +0.071, ETIS +0.077).
 - It is 0.041 below the authors' Polyp-PVT. Likely causes: the authors' epoch was chosen on the test sets (optimistic),
   our recipe omits the official multi-scale training and uses batch 8 and 288 px, and the 90-image validation set is
   noisy (validation Dice moves between 0.90 and 0.918 from epoch to epoch).
