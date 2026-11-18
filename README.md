@@ -32,8 +32,8 @@ data from other sources, robustness with few labels, and sensitivity to the eval
 | Milestone | What | Status | Where |
 |---|---|---|---|
 | **1 · Reproduce** | Run both official test scripts on the five test sets with the authors' trained weights, score with pysodmetrics, compare with the paper tables; explore the data and prepare train / validation / test loaders | **done** | [`milestone1/`](milestone1/) |
-| 2 · Improve | Retrain Polyp-PVT with a proper train/validation/test protocol; losses, augmentations, image sizes | planned | `notebooks/03_PolypPVT_Retraining.ipynb` |
-| 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `notebooks/04`–`06` |
+| **2 · Improve** | Retrain Polyp-PVT choosing the model on a validation split (not on the test sets); compare loss functions, augmentations and image sizes; optional MedSAM with box prompts | **code ready, runs on Colab pending** | [`milestone2/`](milestone2/) |
+| 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `milestone3/` (to be created) |
 
 Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentation.md).
 
@@ -41,30 +41,29 @@ Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentati
 
 ```
 README.md                          this file
-requirements.txt                   packages to install on top of Colab's defaults
+requirements.txt                   packages to install on top of Colab's defaults (for a local run)
 docs/
   Project_Documentation.md         project idea, research question, approach
   Team_Tasks.md                    members and task split
-data/README.md                     dataset notes and the folder layout the models expect (data itself is not committed)
 milestone1/
   M1_Reproduce.ipynb               THE notebook of Milestone 1, self-contained (see "How to run")
-  prepare_data.py                  Python script: data exploration, train / validation / test split, PyTorch datasets and loaders
+  prepare_data.py                  data exploration, train / validation / test split, PyTorch datasets and loaders
   README.md                        Milestone 1 write-up: method, results, PraNet/Kvasir investigation, data preparation
-  requirements.txt                 what the notebook pip-installs (gdown, pysodmetrics, timm, tabulate)
   results/PraNet_summary.csv       mean Dice / IoU per test set, our maps     (same for Polyp-PVT_summary.csv)
   results/PraNet_per_image.csv     per-image scores                            (same for Polyp-PVT_per_image.csv)
   results/comparison.csv|md        ours vs paper, side by side
   results/authors_maps_check/      evaluator check: the authors' published maps scored with our code
   results/splits.csv               every image with its split (train / val / test), source, size and polyp size
-  figures/reproduced_vs_paper.png  bar chart, ours vs paper
-  figures/largest_disagreements.png images where the two models disagree most
-  figures/data_samples.png         sample images with mask outlines from every split and source
-  figures/data_stats.png           polyp size distribution and images per split
-notebooks/03..06_*.ipynb           empty notebooks for Milestones 2 and 3 (title only)
-src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
-src/evaluation|preprocessing|training/   empty, for Milestones 2 and 3
-results/, figures/                 outputs of Milestones 2 and 3 (empty for now)
+  figures/                         ours vs paper, largest disagreements, data samples, data statistics
+milestone2/
+  M2_Improve.ipynb                 THE notebook of Milestone 2: retraining experiments + optional MedSAM
+  polyp_m2.py                      training / evaluation code used by the notebook (losses, augmentations, train loop)
+  README.md                        Milestone 2 write-up: protocol, experiments, findings, how to run
+  results/, figures/               outputs of the Colab runs (added after the runs)
 ```
+
+Data, weights, checkpoints and prediction maps are never committed (see `.gitignore`); the notebooks
+download them and keep them on Google Drive.
 
 ## Data source and how it is downloaded
 
@@ -99,9 +98,10 @@ and data figures in [`milestone1/README.md`](milestone1/README.md).
 
 ## How to run
 
-The solution is one Jupyter notebook, **`milestone1/M1_Reproduce.ipynb`**, plus the Python script
-**`milestone1/prepare_data.py`** that the notebook fetches for its last section (so the notebook needs
-nothing else from this repository).
+Each milestone is one Colab notebook that fetches what it needs from this repository by itself.
+
+**Milestone 1:** **`milestone1/M1_Reproduce.ipynb`**, plus the Python script
+**`milestone1/prepare_data.py`** that the notebook fetches for its last section.
 
 1. Open it in Google Colab:
    [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone1/M1_Reproduce.ipynb)
@@ -118,6 +118,13 @@ copied to the work folder.
 To run locally instead, install `requirements.txt` plus PyTorch and OpenCV and run the cells in order
 (every step is plain Python or bash). A full CPU run on a Mac takes about 30 minutes, mostly
 Polyp-PVT inference.
+
+**Milestone 2:** **`milestone2/M2_Improve.ipynb`**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ounissinour/PolypVision/blob/main/milestone2/M2_Improve.ipynb),
+same three steps (GPU runtime, Run all). It trains Polyp-PVT several times, so it needs several Colab
+sessions: every run is saved to Drive after each epoch and resumes after a disconnect, and finished runs
+are skipped, so just *Run all* again. `RUN_ONLY` splits the experiments between team members. Details in
+[`milestone2/README.md`](milestone2/README.md).
 
 ## Milestone 1 results
 
@@ -138,6 +145,32 @@ Milestone 1 README). Scoring the authors' own published prediction maps with our
 ten paper values, so the metric is the papers' metric: mean Dice over 256 thresholds, not Dice at a
 single 0.5 threshold, which is 0.003–0.009 higher on every set. An independent CPU re-run gives the
 same ten numbers.
+
+## Milestone 2 – Improve
+
+The official `Train.py` evaluates the five **test** sets after every epoch and keeps the epoch with the
+best test Dice, so the released Polyp-PVT model was chosen on the test data. Milestone 2 retrains
+Polyp-PVT with the Milestone 1 validation split (1285 train / 165 validation images): the epoch is
+chosen on validation and the test sets are scored once. On top of the official recipe we compare,
+one factor at a time:
+
+| Factor | Options |
+|---|---|
+| Loss | official structure loss (as the code computes it), structure loss as the paper describes it, BCE + Dice, Dice |
+| Augmentation | none (official default), flips, flips + rotation (official option), strong (+ zoom crop, colour, blur) |
+| Image size | 256, 352 (official), 448 |
+
+The best option per factor (on validation) is then trained for 100 epochs next to the official recipe,
+and compared with the authors' model and PraNet. Optional: MedSAM with box prompts (ground-truth boxes,
+perturbed boxes, and boxes from Polyp-PVT's prediction).
+
+While building it we found that the official "weighted BCE" is a plain BCE: `structure_loss` passes
+`reduce='none'`, an old boolean argument, so PyTorch averages the BCE to one number before the edge
+weighting is applied. The notebook demonstrates this and tests the loss as the paper describes it.
+
+The code was tested on CPU: with the authors' weights, `polyp_m2.evaluate` reproduces the
+Milestone 1 numbers on all 798 test images (per-image difference < 1e-5). **The training runs need a Colab GPU and have not been
+run yet**; results and figures will be added to `milestone2/results` and `milestone2/figures`.
 
 ## References
 
