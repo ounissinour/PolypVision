@@ -90,7 +90,8 @@ All team members will collaborate on:
 - Results should be saved in the appropriate `results/` folder.
 - Figures should be saved in the appropriate `figures/` folder.
 - Changes to shared code should be communicated to the group.
-- The final results should be reviewed by all team members before inclusion in the report.4
+- The final results should be reviewed by all team members before inclusion in the report.
+
 ## References
 
 ### Code

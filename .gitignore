@@ -1,31 +1,28 @@
-
 # Python
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
+.pytest_cache/
 *.egg-info/
 .venv/
 venv/
 
-# Datasets (ma na3mlouch commit lil data)
-data/*
-!data/README.md
-
-# Model checkpoints
+# Data, weights and prediction maps live in Colab / Google Drive, never in git
+data/
+weights/
+maps/
+runs/
+*.zip
 *.pth
 *.pt
 *.ckpt
-snapshots/
 
-# Predicted masks (kbar w yetjeddou)
-results/**/masks/
-results/**/*.png
-
-# Official repos clonés
+# Official repositories cloned by the notebooks
 PraNet/
 Polyp-PVT/
+MedSAM/
 
-# Système
+# System / editors
 .DS_Store
 Thumbs.db
 .vscode/
