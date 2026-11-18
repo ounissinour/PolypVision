@@ -1,0 +1,7 @@
+experiment,input_size,loss,augmentation,best_epoch,val_mean_dice,val_mean_iou,training_seconds,status
+baseline_352,352,structure,False,92,0.916565,0.866418,5519.907827,complete
+loss_bce_dice_352,352,bce_dice,False,24,0.915268,0.865554,5443.492878,complete
+loss_focal_tversky_352,352,focal_tversky,False,77,0.913884,0.861342,5467.847422,complete
+augment_flip_rotate_352,352,structure,True,74,0.914234,0.86461,5640.295035,complete
+size_288,288,structure,False,100,0.9196323032297294,0.8678036419606217,4870.60033,complete
+size_416,416,structure,False,86,0.917901,0.867589,7296.961648,complete

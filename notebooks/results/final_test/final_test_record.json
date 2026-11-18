@@ -1,0 +1,20 @@
+{
+  "selected_experiment": "size_288",
+  "checkpoint": "/content/runs/size_288/best.pt",
+  "checkpoint_sha256": "5f3ef4c86894deeb9ba4b7a85c06fb3ba32e830cea39780b22a0c52bf3107f95",
+  "checkpoint_source": "re-trained here: size_288 with Baha's identical recipe (same split manifest, seed 2026, 100 epochs); the locked epoch-100 file could not be recovered",
+  "checkpoint_epoch": 56,
+  "validation_mean_dice": 0.918440893761584,
+  "test_evaluated_once": true,
+  "test_evaluated_at_utc": "2026-11-18T14:39:34.082204+00:00",
+  "flagged_images_excluded_in_second_table": 49,
+  "files": [
+    "final_test_metrics.csv",
+    "size_288_test_per_image.csv",
+    "final_comparison_full.csv",
+    "final_comparison_excl_flagged.csv",
+    "final_comparison.md",
+    "final_comparison.png",
+    "examples.png"
+  ]
+}
