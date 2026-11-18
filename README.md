@@ -32,7 +32,7 @@ data from other sources, robustness with few labels, and sensitivity to the eval
 | Milestone | What | Status | Where |
 |---|---|---|---|
 | **1 · Reproduce** | Run both official test scripts on the five test sets with the authors' trained weights, score with pysodmetrics, compare with the paper tables; explore the data and prepare train / validation / test loaders | **done** | [`milestone1/`](milestone1/) |
-| 2 · Improve | Retrain Polyp-PVT with validation-based checkpoint selection; compare losses, augmentations, and image sizes | **in progress** — six validation runs complete; test evaluation pending overlap resolution | [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb) |
+| 2 · Improve | Retrain Polyp-PVT with validation-based checkpoint selection; compare losses, augmentations, and image sizes | **done** — six validation runs, validation-selected `size_288`, one-time test on the five sets | [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb), [`notebooks/03b_PolypPVT_Final_Test.ipynb`](notebooks/03b_PolypPVT_Final_Test.ipynb) |
 | 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `notebooks/04`–`06` |
 
 Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentation.md).
@@ -60,8 +60,10 @@ milestone1/
   figures/largest_disagreements.png images where the two models disagree most
   figures/data_samples.png         sample images with mask outlines from every split and source
   figures/data_stats.png           polyp size distribution and images per split
-notebooks/03_PolypPVT_Retraining.ipynb  Colab notebook for Milestone 2
-notebooks/results/                  M2 executed record, split manifest, validation and audit artifacts
+notebooks/03_PolypPVT_Retraining.ipynb  Colab notebook for Milestone 2 (six runs, validation selection)
+notebooks/03b_PolypPVT_Final_Test.ipynb Colab notebook for the one-time test of the selected size_288 model
+notebooks/results/                  M2 executed records, split manifest, validation and audit artifacts
+notebooks/results/final_test/       M2 test results: tables, per-image scores, figures, run record
 src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
 src/training/m2_pipeline.py        reproducible M2 training and evaluation helpers
 notebooks/04..06_*.ipynb            placeholders for Milestone 3 (not undertaken)
@@ -151,13 +153,13 @@ same ten numbers.
 
 ## Milestone 2 — Improve Polyp-PVT
 
-Milestone 2 training and validation comparisons have completed; results are recorded on this branch. The source Colab notebook is [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb), and the reusable pipeline is [`src/training/m2_pipeline.py`](src/training/m2_pipeline.py). The executed notebook, validation table, and run provenance are archived under [`notebooks/results/`](notebooks/results/). Milestone 1 material and results remain intact. Milestone 3 and MedSAM were not undertaken.
+Milestone 2 is complete: six controlled training runs, validation-based selection, and a one-time test of the selected model (see *Final test* below). The source Colab notebook is [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb), and the reusable pipeline is [`src/training/m2_pipeline.py`](src/training/m2_pipeline.py). The executed notebook, validation table, and run provenance are archived under [`notebooks/results/`](notebooks/results/). Milestone 1 material and results remain intact. MedSAM (optional) was not undertaken.
 
 ### Validation split and leakage controls
 
 The official training archive contains 900 Kvasir-SEG images and 550 CVC-ClinicDB frames. The M1 materials do not provide verified CVC-ClinicDB video-sequence identifiers, so all 550 ClinicDB frames were retained in training. A fixed-seed (2026) 10% holdout was created from Kvasir-SEG after image/mask pairing, dimension, exact-duplicate, and near-duplicate checks. The resulting split contains 810 Kvasir and 550 ClinicDB training images, plus 90 Kvasir validation images. This gives a Kvasir-only validation estimate; sequence-level ClinicDB validation remains unavailable without verified video IDs.
 
-All six experiment runs used this same split. The five official test datasets were excluded from training, tuning, and checkpoint selection. After validation selection was locked, the test archive was downloaded only for a post-selection overlap audit. The upstream Polyp-PVT test-set checkpoint-selection behavior was bypassed. The final selection was locked using validation dynamic mean Dice (256 thresholds), with validation mean IoU as the tie-breaker. Test scoring did not complete, so no test metrics are reported here.
+All six experiment runs used this same split. The five official test datasets were excluded from training, tuning, and checkpoint selection. After validation selection was locked, the test archive was downloaded only for a post-selection overlap audit. The upstream Polyp-PVT test-set checkpoint-selection behavior was bypassed. The final selection was locked using validation dynamic mean Dice (256 thresholds), with validation mean IoU as the tie-breaker. The selected model was then scored once on the five test sets (see *Final test*).
 
 ### Post-selection overlap audit
 
@@ -189,4 +191,38 @@ The executed run used Python 3.13.16, PyTorch 2.14.1+cu130, torchvision 0.29.1+c
 | Completed validation experiments | 6 / 6 |
 | Validation-selected checkpoint | `size_288/best.pt` (epoch 100) |
 | Locked validation mean Dice / mean IoU | 0.919632 / 0.867804 |
-| Final evaluation on five official test sets | Not completed; overlap review unresolved; no metrics |
+| Final evaluation on five official test sets | Done once with the re-trained `size_288` (see below) |
+
+### Final test of the selected model
+
+Notebook: [`notebooks/03b_PolypPVT_Final_Test.ipynb`](notebooks/03b_PolypPVT_Final_Test.ipynb) (executed copy and all outputs in
+[`notebooks/results/final_test/`](notebooks/results/final_test/)).
+
+**Checkpoint.** The `size_288/best.pt` found in the shared Drive folder was an epoch-19 save (validation Dice 0.908),
+not the locked epoch-100 checkpoint (0.9196); the notebook's validation re-check caught this before any test image was
+scored. `size_288` was therefore re-trained with the identical recipe (same split manifest, seed 2026, 100 epochs,
+`train_experiment` unchanged). Its validation-selected epoch is **56**, validation Dice **0.9184** / IoU 0.8676
+(original locked run: 0.9196 / 0.8678), and re-scoring validation reproduces it exactly. GPU training is not
+bit-for-bit deterministic, so this is a faithful re-run, not the identical file.
+
+**Test.** One evaluation on the five sets, same preprocessing as validation, same 256-threshold metric as Milestone 1.
+Mean Dice (authors' models: Milestone 1 per-image scores):
+
+| Model | Kvasir | ClinicDB | ColonDB | ETIS | CVC-300 | Mean of 5 |
+|---|---:|---:|---:|---:|---:|---:|
+| PraNet, authors | 0.894 | 0.899 | 0.712 | 0.628 | 0.871 | 0.801 |
+| Polyp-PVT, authors (epoch chosen on test) | 0.917 | 0.937 | 0.808 | 0.787 | 0.900 | 0.870 |
+| **Polyp-PVT `size_288`, ours (validation-selected)** | **0.899** | **0.889** | **0.782** | **0.706** | **0.871** | **0.829** |
+
+Mean IoU of our model: 0.846 / 0.835 / 0.703 / 0.625 / 0.801 (mean 0.762).
+
+- Our validation-selected Polyp-PVT beats PraNet on average (+0.028), mostly on the unseen hospitals
+  (ColonDB +0.070, ETIS +0.078).
+- It is 0.041 below the authors' Polyp-PVT. Likely causes: the authors' epoch was chosen on the test sets (optimistic),
+  our recipe omits the official multi-scale training and uses batch 8 and 288 px, and the 90-image validation set is
+  noisy (validation Dice moves between 0.90 and 0.918 from epoch to epoch).
+- **Overlap check.** Without the 49 flagged near-duplicate test images, our mean Dice is 0.831 (ClinicDB 0.886); for the
+  authors' models the scores also rise slightly (Polyp-PVT ClinicDB 0.937 → 0.946). The flagged images do not inflate
+  the results ([`final_comparison.md`](notebooks/results/final_test/final_comparison.md)).
+
+![final comparison](notebooks/results/final_test/final_comparison.png)
