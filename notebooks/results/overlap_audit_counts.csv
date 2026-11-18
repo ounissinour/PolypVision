@@ -1,0 +1,11 @@
+dataset,exact_sha256_match,nearest_dhash_distance,count
+CVC-ClinicDB,False,0,2
+CVC-ClinicDB,False,1,6
+CVC-ClinicDB,False,2,6
+CVC-ClinicDB,False,3,6
+CVC-ColonDB,False,1,2
+CVC-ColonDB,False,2,5
+CVC-ColonDB,False,3,19
+ETIS-LaribPolypDB,False,2,1
+ETIS-LaribPolypDB,False,3,1
+Kvasir,False,3,1

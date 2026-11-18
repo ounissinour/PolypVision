@@ -32,7 +32,7 @@ data from other sources, robustness with few labels, and sensitivity to the eval
 | Milestone | What | Status | Where |
 |---|---|---|---|
 | **1 · Reproduce** | Run both official test scripts on the five test sets with the authors' trained weights, score with pysodmetrics, compare with the paper tables; explore the data and prepare train / validation / test loaders | **done** | [`milestone1/`](milestone1/) |
-| 2 · Improve | Retrain Polyp-PVT with a proper train/validation/test protocol; losses, augmentations, image sizes | planned | `notebooks/03_PolypPVT_Retraining.ipynb` |
+| 2 · Improve | Retrain Polyp-PVT with validation-based checkpoint selection; compare losses, augmentations, and image sizes | **in progress** — six validation runs complete; test evaluation pending overlap resolution | [`notebooks/03_PolypPVT_Retraining.ipynb`](notebooks/03_PolypPVT_Retraining.ipynb) |
 | 3 · Contribute | Other-hospital data, 10/25/50 % labels, failure analysis, evaluation-choice audit | planned | `notebooks/04`–`06` |
 
 Full project outline: [`docs/Project_Documentation.md`](docs/Project_Documentation.md).
@@ -60,10 +60,11 @@ milestone1/
   figures/largest_disagreements.png images where the two models disagree most
   figures/data_samples.png         sample images with mask outlines from every split and source
   figures/data_stats.png           polyp size distribution and images per split
-notebooks/03..06_*.ipynb           empty notebooks for Milestones 2 and 3 (title only)
+notebooks/03_PolypPVT_Retraining.ipynb  Colab notebook for Milestone 2
+notebooks/results/                  M2 executed record, split manifest, validation and audit artifacts
 src/metrics.py                     shared pysodmetrics wrapper for Milestones 2 and 3
-src/evaluation|preprocessing|training/   empty, for Milestones 2 and 3
-results/, figures/                 outputs of Milestones 2 and 3 (empty for now)
+src/training/m2_pipeline.py        reproducible M2 training and evaluation helpers
+notebooks/04..06_*.ipynb            placeholders for Milestone 3 (not undertaken)
 ```
 
 ## Data source and how it is downloaded
@@ -156,7 +157,13 @@ Milestone 2 training and validation comparisons have completed; results are reco
 
 The official training archive contains 900 Kvasir-SEG images and 550 CVC-ClinicDB frames. The M1 materials do not provide verified CVC-ClinicDB video-sequence identifiers, so all 550 ClinicDB frames were retained in training. A fixed-seed (2026) 10% holdout was created from Kvasir-SEG after image/mask pairing, dimension, exact-duplicate, and near-duplicate checks. The resulting split contains 810 Kvasir and 550 ClinicDB training images, plus 90 Kvasir validation images. This gives a Kvasir-only validation estimate; sequence-level ClinicDB validation remains unavailable without verified video IDs.
 
-All six experiment runs used this same split. The official five test datasets were not downloaded or evaluated during training, tuning, or checkpoint selection. The upstream Polyp-PVT test-set checkpoint-selection behavior was bypassed. The final selection was locked using validation dynamic mean Dice (256 thresholds), with validation mean IoU as the tie-breaker. The final official test evaluation remains **not run**; no test metrics are reported here.
+All six experiment runs used this same split. The five official test datasets were excluded from training, tuning, and checkpoint selection. After validation selection was locked, the test archive was downloaded only for a post-selection overlap audit. The upstream Polyp-PVT test-set checkpoint-selection behavior was bypassed. The final selection was locked using validation dynamic mean Dice (256 thresholds), with validation mean IoU as the tie-breaker. Test scoring did not complete, so no test metrics are reported here.
+
+### Post-selection overlap audit
+
+The post-selection audit flagged 49 test images with a nearest training image at 64-bit dHash distance 0–3; none was an exact SHA-256 match. Visual review of all seven contact sheets found several CVC-ClinicDB test/train pairs with the same lesion and camera view across small frame-to-frame changes (for example, stems 353/354 and 429/436). These are consistent with video-sequence overlap, but verified sequence IDs are unavailable, so the sequence assignments remain unconfirmed. Several cross-dataset candidates were visually different images, showing that the dHash threshold alone over-flags similar endoscopy scenes.
+
+The final test evaluator produced no metrics: an earlier invocation stopped at the overlap guard, and the latest notebook attempt failed with `NameError: json is not defined` before entering the evaluator. The validation-selected checkpoint and validation results remain unchanged. Because ClinicDB sequence overlap is unresolved, do not interpret future test scores as an independent sequence-level evaluation until the training/test sequence relationship is resolved. The audit counts, candidate pairs, and review notes are archived in [`notebooks/results/`](notebooks/results/).
 
 ### Controlled experiments and validation results
 
@@ -182,4 +189,4 @@ The executed run used Python 3.13.16, PyTorch 2.14.1+cu130, torchvision 0.29.1+c
 | Completed validation experiments | 6 / 6 |
 | Validation-selected checkpoint | `size_288/best.pt` (epoch 100) |
 | Locked validation mean Dice / mean IoU | 0.919632 / 0.867804 |
-| Final evaluation on five official test sets | Not run |
+| Final evaluation on five official test sets | Not completed; overlap review unresolved; no metrics |

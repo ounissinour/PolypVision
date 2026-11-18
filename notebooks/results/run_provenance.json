@@ -44,6 +44,25 @@
   "validation_mean_dice": 0.9196323032297294,
   "validation_mean_iou": 0.8678036419606217,
   "all_six_experiments_complete": true,
-  "official_test_datasets_downloaded_or_evaluated": false,
-  "note": "Values transcribed from the executed Colab notebook output; no test metrics are present."
+  "note": "Six training/validation comparisons completed and the validation-selected checkpoint remains size_288, epoch 100. The official test archive was downloaded only after selection for overlap auditing. No test metrics were produced.",
+  "official_test_data": {
+    "downloaded_after_validation_selection": true,
+    "used_for_training_tuning_or_checkpoint_selection": false,
+    "final_metrics_computed": false,
+    "final_test_metrics_file": null
+  },
+  "post_selection_overlap_audit": {
+    "checked_after_selection": true,
+    "flagged_candidate_images": 49,
+    "exact_sha256_matches": 0,
+    "near_hash_rule": "nearest 64-bit dHash Hamming distance <= 3",
+    "visual_review": "Seven contact sheets reviewed; multiple CVC-ClinicDB train/test pairs are consistent with neighboring frames from the same video sequence; several cross-dataset candidates are visibly different images.",
+    "sequence_ids_verified": false,
+    "metrics_computed": false
+  },
+  "final_test_attempt": {
+    "status": "not_completed",
+    "latest_failure": "NameError: json is not defined before entering the evaluator",
+    "test_metrics_computed": false
+  }
 }
